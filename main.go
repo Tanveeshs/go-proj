@@ -6,6 +6,7 @@ import (
 	"github.com/rs/xid"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -51,6 +52,23 @@ func UpdateRecipeHandler(c *gin.Context) {
 	recipes[index] = recipe
 	c.JSON(http.StatusOK, recipe)
 }
+func DeleteRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+	index := -1
+	for i := 0; i < len(recipes); i++ {
+		if id == recipes[i].ID {
+			index = i
+		}
+	}
+	if index == -1 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe Not Found"})
+		return
+	}
+	recipes = append(recipes[:index], recipes[index+1:]...)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Recipe has been Deleted",
+	})
+}
 func NewRecipeHandler(c *gin.Context) {
 	var recipe Recipe
 	if err := c.ShouldBindJSON(&recipe); err != nil {
@@ -62,12 +80,36 @@ func NewRecipeHandler(c *gin.Context) {
 	recipes = append(recipes, recipe)
 	c.JSON(http.StatusOK, recipe)
 }
+func SearchRecipeHandler(c *gin.Context) {
+	tag := c.Query("tag")
+	if len(tag) < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Tag not defined",
+		})
+	}
+	listOfRecipes := make([]Recipe, 0)
+	for i := 0; i < len(recipes); i++ {
+		found := false
+		for _, t := range recipes[i].Tags {
+			if strings.EqualFold(t, tag) {
+				found = true
+				break
+			}
+		}
+		if found {
+			listOfRecipes = append(listOfRecipes, recipes[i])
+		}
+	}
+	c.JSON(http.StatusOK, listOfRecipes)
+}
 
 func main() {
 	router := gin.Default()
 	router.POST("/recipes", NewRecipeHandler)
 	router.GET("/recipes", ListRecipesHandler)
 	router.PATCH("/recipes/:id", UpdateRecipeHandler)
+	router.DELETE("/recipes/:id", DeleteRecipeHandler)
+	router.GET("/recipes/search", SearchRecipeHandler)
 
 	err := router.Run(":3000")
 	if err != nil {
