@@ -1,0 +1,110 @@
+{
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a recipes API Project.",
+        "title": "Recipes API",
+        "contact": {
+            "name": "Tanveesh Singh Chaudhery",
+            "email": "tanveeshs@gmail.com"
+        },
+        "version": "1.0.0"
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "paths": {
+        "/recipes": {
+            "get": {
+                "description": "To Get All Recipes",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/main.Recipe"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recipes/{id}": {
+            "put": {
+                "description": "Update Recipe",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "Id of Recipe",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Recipe"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.Recipe": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "ingredients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "instructions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publishedAt": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,9 +1,23 @@
+//	@title			Recipes API
+//	@description	This is a recipes API Project.
+//	@host			localhost:3000
+//	@BasePath		/
+//	@version		1.0.0
+//	@contact.name	Tanveesh Singh Chaudhery
+//	@contact.email	tanveeshs@gmail.com
+//	@accept			application/json
+//	@produce		application/json
+//	@schemes		http
+
 package main
 
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
+	"github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
+	"go-proj/docs"
 	"net/http"
 	"os"
 	"strings"
@@ -26,10 +40,26 @@ func init() {
 	file, _ := os.ReadFile("recipes.json")
 	_ = json.Unmarshal(file, &recipes)
 }
+
+// ListRecipesHandler @Summary      List all recipes
+//
+//	@Description	To Get All Recipes
+//	@Tags			recipes
+//	@Produce		json
+//	@Success		200	{array}	Recipe
+//	@Router			/recipes [get]
 func ListRecipesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipes)
 }
 
+// UpdateRecipeHandler @Summary      Update Recipe
+//
+//	@Description	Update Recipe
+//	@Tags			recipes
+//	@Param			id	path	string	true	"Id of Recipe"	Format(string)
+//	@Produce		json
+//	@Success		200	{object}	Recipe
+//	@Router	/recipes/{id} [put]
 func UpdateRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	var recipe Recipe
@@ -110,7 +140,8 @@ func main() {
 	router.PATCH("/recipes/:id", UpdateRecipeHandler)
 	router.DELETE("/recipes/:id", DeleteRecipeHandler)
 	router.GET("/recipes/search", SearchRecipeHandler)
-
+	docs.SwaggerInfo.Title = "Recipes API"
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	err := router.Run(":3000")
 	if err != nil {
 		return
