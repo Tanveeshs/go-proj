@@ -13,6 +13,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-contrib/sessions"
+	redisstore "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/swaggo/files"
@@ -29,9 +31,9 @@ import (
 var ctx context.Context
 var err error
 var client *mongo.Client
-var collection *mongo.Collection
 var MongoUri string = "mongodb://tanveeshs:pass123@localhost:27017/test?authSource=admin"
 var recipesHandler *handlers.RecipesHandler
+var authHandler *handlers.AuthHandler
 
 func init() {
 	ctx = context.Background()
@@ -42,7 +44,8 @@ func init() {
 		log.Fatal(err)
 	}
 	log.Println("Connected to MongoDB")
-	collection = client.Database("test").Collection("recipes")
+	collection := client.Database("test").Collection("recipes")
+	userCollection := client.Database("test").Collection("users")
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "",
@@ -51,19 +54,26 @@ func init() {
 	fmt.Println(status)
 	recipesHandler = handlers.NewRecipesHandler(ctx,
 		collection, redisClient)
+	authHandler = handlers.NewAuthHandler(userCollection, ctx)
 }
 
 func main() {
 	router := gin.Default()
+
+	store, _ := redisstore.NewStore(10, "tcp",
+		"localhost:6379", "", []byte("secret"))
+	router.Use(sessions.Sessions("recipes_api", store))
+	router.POST("/signin", authHandler.SignInHandler)
+	router.GET("/signout", authHandler.SignOutHandler)
+	router.GET("/refresh", authHandler.RefreshHandler)
+	router.GET("/recipes", recipesHandler.ListRecipesHandler)
 	authorized := router.Group("/")
-	//authorized.Use(middleware.AuthMiddleware())
+	authorized.Use(authHandler.AuthMiddleware())
 	{
 		authorized.POST("/recipes", recipesHandler.NewRecipeHandler)
-		authorized.GET("/recipes", recipesHandler.ListRecipesHandler)
-		authorized.PATCH("/recipes/:id", recipesHandler.UpdateRecipeHandler)
-		authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
-		authorized.GET("/recipes/search", recipesHandler.SearchRecipeHandler)
-
+		//authorized.PATCH("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+		//authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+		//authorized.GET("/recipes/search", recipesHandler.SearchRecipeHandler)
 	}
 
 	docs.SwaggerInfo.Title = "Recipes API"
